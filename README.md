@@ -1,122 +1,163 @@
-# wxcloudrun-express
+# 📱 WiFi 配网助手 - 微信小程序
 
-[![GitHub license](https://img.shields.io/github/license/WeixinCloud/wxcloudrun-express)](https://github.com/WeixinCloud/wxcloudrun-express)
-![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/WeixinCloud/wxcloudrun-express/express)
-![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/WeixinCloud/wxcloudrun-express/sequelize)
+通过蓝牙连接开发板并配置 WiFi 的微信小程序，配合微信云托管服务使用。
 
-微信云托管 Node.js Express 框架模版，实现简单的计数器读写接口，使用云托管 MySQL 读写、记录计数值。
+## ✨ 功能特性
 
-![](https://qcloudimg.tencent-cloud.cn/raw/be22992d297d1b9a1a5365e606276781.png)
+### 小程序端
+- 🔍 **自动扫描**：一键发现附近的 ESP32/开发板设备
+- 📶 **信号强度显示**：实时 RSSI 值，智能排序展示最强信号设备
+- 🔗 **智能连接**：自动查找可写服务/特性
+- ⚙️ **WiFi 配置**：通过蓝牙发送 SSID 和密码到开发板
+- 📝 **操作日志**：完整的调试信息记录
 
-## 快速开始
+### 服务端（微信云托管）
+- 🌐 **API 接口**：提供 WiFi 配置管理、设备状态查询等接口
+- 💾 **代码分发**：通过 API 获取小程序源代码文件
+- 📊 **访问统计**：内置计数器功能
+- 🔧 **可扩展性**：支持自定义数据库存储配网历史
 
-前往 [微信云托管快速开始页面](https://cloud.weixin.qq.com/cloudrun/onekey)，选择相应语言的模板，根据引导完成部署。
-
-## 本地调试
-下载代码在本地调试，请参考[微信云托管本地调试指南](https://developers.weixin.qq.com/miniprogram/dev/wxcloudrun/src/guide/debug/)
-
-## 实时开发
-代码变动时，不需要重新构建和启动容器，即可查看变动后的效果。请参考[微信云托管实时开发指南](https://developers.weixin.qq.com/miniprogram/dev/wxcloudrun/src/guide/debug/dev.html)
-
-## Dockerfile最佳实践
-请参考[如何提高项目构建效率](https://developers.weixin.qq.com/miniprogram/dev/wxcloudrun/src/scene/build/speed.html)
-
-## 项目结构说明
+## 📁 项目结构
 
 ```
-.
-├── Dockerfile
-├── README.md
-├── container.config.json
-├── db.js
-├── index.js
-├── index.html
-├── package.json
+wifi-config-miniprogram-vonArmor/
+├── index.js              # Express 服务端入口（API + 代码分发）
+├── index.html            # 服务首页（功能介绍 + API 文档）
+├── db.js                 # 数据库配置（SQLite）
+├── package.json          # 依赖配置
+├── Dockerfile            # Docker 构建配置
+└── container.config.json # 微信云托管配置
 ```
 
-- `index.js`：项目入口，实现主要的读写 API
-- `db.js`：数据库相关实现，使用 `sequelize` 作为 ORM
-- `index.html`：首页代码
-- `package.json`：Node.js 项目定义文件
-- `container.config.json`：模板部署「服务设置」初始化配置（二开请忽略）
-- `Dockerfile`：容器配置文件
+## 🚀 快速开始
 
-## 服务 API 文档
+### 1. 部署到微信云托管
 
-### `GET /api/count`
+```bash
+# 克隆项目到本地
+git clone <your-repo-url>
+cd wifi-config-miniprogram-vonArmor
 
-获取当前计数
+# 在微信开发者工具中创建云托管环境
+# 选择此目录作为项目根目录
+```
 
-#### 请求参数
+### 2. 获取小程序代码
 
-无
+访问部署后的服务地址，点击"下载代码包"按钮获取小程序源代码。
 
-#### 响应结果
+或者通过 API 获取：
 
-- `code`：错误码
-- `data`：当前计数值
+```bash
+curl https://your-service-url.com/api/miniprogram/files
+```
 
-##### 响应结果示例
+### 3. 在微信开发者工具中导入小程序
 
+1. 创建新项目
+2. 选择"不使用云开发模板"
+3. 填写 AppID（测试可使用体验版）
+4. 选择项目目录
+5. 将获取的代码文件分别创建到对应位置
+
+## 📱 小程序使用流程
+
+```
+┌─────────────────────────────────────┐
+│  1. 点击"开始扫描设备"              │
+├─────────────────────────────────────┤
+│  2. 从列表中选择目标 ESP32 设备      │
+├─────────────────────────────────────┤
+│  3. 输入 WiFi SSID 和密码           │
+├─────────────────────────────────────┤
+│  4. 点击"发送 WiFi 配置"            │
+└─────────────────────────────────────┘
+```
+
+## 🔌 API 接口文档
+
+### POST `/api/wifi/config`
+保存 WiFi 配置到服务器（可选功能）。
+
+**请求体：**
 ```json
 {
-  "code": 0,
-  "data": 42
+  "ssid": "MyWiFi",
+  "password": "12345678",
+  "deviceId": "ESP32-001"
 }
 ```
 
-#### 调用示例
+### GET `/api/wifi/devices`
+获取已配网的设备列表。
 
-```
-curl https://<云托管服务域名>/api/count
-```
+### GET `/api/wifi/status/:deviceId`
+获取指定设备的 WiFi 状态。
 
-### `POST /api/count`
+### GET `/api/miniprogram/files`
+获取小程序代码文件列表（JSON 格式）。
 
-更新计数，自增或者清零
+## 🔧 ESP32 接收端示例
 
-#### 请求参数
+```cpp
+#include <BluetoothSerial.h>
+#include <WiFi.h>
 
-- `action`：`string` 类型，枚举值
-  - 等于 `"inc"` 时，表示计数加一
-  - 等于 `"clear"` 时，表示计数重置（清零）
+BluetoothSerial BT;
 
-##### 请求参数示例
+void setup() {
+  Serial.begin(115200);
+  BT.begin("WiFiConfigDevice"); // 设备名称
+}
 
-```
-{
-  "action": "inc"
+void loop() {
+  if (BT.hasData()) {
+    String data = BT.readString();
+    
+    // 解析 JSON: {"ssid":"MyWiFi","password":"12345678"}
+    // TODO: 添加 WiFi 连接逻辑
+    
+    BT.write("ACK\r\n");
+  }
+  delay(10);
 }
 ```
 
-#### 响应结果
+## 📊 技术栈
 
-- `code`：错误码
-- `data`：当前计数值
+### 小程序端
+- **框架**: 微信小程序原生框架
+- **蓝牙**: Web Bluetooth API（微信封装）
+- **UI**: WXML + WXSS
 
-##### 响应结果示例
+### 服务端
+- **运行时**: Node.js
+- **Web 框架**: Express
+- **数据库**: SQLite（通过 Sequelize ORM）
+- **部署**: 微信云托管（Docker）
 
-```json
-{
-  "code": 0,
-  "data": 42
-}
-```
+## 🌟 特色功能
 
-#### 调用示例
+1. **智能设备去重**：自动保留信号最强的设备实例
+2. **服务自动发现**：无需手动配置 UUID，自动查找可写特性
+3. **实时日志记录**：所有操作都有详细日志输出
+4. **优雅的错误处理**：友好的错误提示和恢复机制
 
-```
-curl -X POST -H 'content-type: application/json' -d '{"action": "inc"}' https://<云托管服务域名>/api/count
-```
+## 📝 注意事项
 
-## 使用注意
-如果不是通过微信云托管控制台部署模板代码，而是自行复制/下载模板代码后，手动新建一个服务并部署，需要在「服务设置」中补全以下环境变量，才可正常使用，否则会引发无法连接数据库，进而导致部署失败。
-- MYSQL_ADDRESS
-- MYSQL_PASSWORD
-- MYSQL_USERNAME
-以上三个变量的值请按实际情况填写。如果使用云托管内MySQL，可以在控制台MySQL页面获取相关信息。
+1. **权限配置**：需要在微信后台申请蓝牙相关权限
+2. **iOS 限制**：iOS 对蓝牙扫描有严格限制，需要用户主动触发
+3. **开发板协议**：根据实际开发板的通信协议调整数据格式
+4. **测试环境**：建议在真机上测试蓝牙功能（模拟器不支持）
 
+## 🤝 贡献
 
-## License
+欢迎提交 Issue 和 Pull Request！
 
-[MIT](./LICENSE)
+## 📄 License
+
+MIT License
+
+---
+
+**傻妞出品 🌟 | 让 IoT 设备配网更简单**
